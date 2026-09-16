@@ -4,8 +4,6 @@
 
 RESQ is a decision-support tool for urban resilience planning. Roads, hospitals, and the people who depend on them are all connected — a single road closure doesn't just cause a detour, it can overload other roads, cut off ambulance routes, and leave entire neighborhoods without fast access to care. Most infrastructure monitoring looks at assets one at a time. RESQ looks at the whole chain reaction.
 
-Built for M#.
-
 ## What it does
 
 Pick a road on the map, fail it, and watch what happens:
@@ -63,3 +61,7 @@ A synthetic urban network, generated the same way every time (so the live demo n
 ## A note on the numbers
 
 Real road geometry and hospital/facility locations come from OpenStreetMap when available. Traffic demand, road capacity assumptions, congestion behavior, and intervention costs are **modelled, not measured** — they're documented, configurable prototype parameters (see `app/config.py`), not official traffic counts. We say this clearly in the UI too. Nothing here should be read as real municipal data.
+
+## Note 
+
+The current hackathon MVP uses deterministic synthetic datasets for traffic, capacity, population exposure, and failure scenarios. The architecture is designed to replace these modeled inputs with real-time traffic, infrastructure, flood, healthcare, and population datasets for future city-scale deployment.
