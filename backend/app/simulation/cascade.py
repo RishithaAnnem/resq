@@ -27,8 +27,11 @@ edges" - i.e. how many hops of secondary effects the failure produced.
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set
 
-from app.config import CascadeParams
-from app.models.network import EdgeStatus, Network
+from app.config import (
+    CascadeParams,
+    MAX_SECONDARY_FAILURES_PER_STEP,
+    SECONDARY_FAILURE_UTILIZATION,
+)from app.models.network import EdgeStatus, Network
 from app.simulation.demand import ODDemand, assign_demand
 
 
@@ -134,9 +137,10 @@ def simulate_failure(
     # -- Step 1-2: mark initial failures -------------------------------------
     initially_failed: List[str] = []
     for asset_id in failed_asset_ids:
-        if asset_id in network.edges_by_id:
-            network.fail_edge(asset_id)
-            initially_failed.append(asset_id)
+                if asset_id in network.edges_by_id:
+            for eid in network.expand_road(asset_id):
+                network.fail_edge(eid)
+                initially_failed.append(eid)
         elif asset_id in network.graph.nodes:
             initially_failed.extend(network.fail_junction(asset_id))
         # unknown ids are silently ignored - caller/API layer should validate
@@ -159,9 +163,11 @@ def simulate_failure(
 
     for it in range(1, params.max_iterations + 1):
         # -- Step 3-6: redistribute traffic on the current graph -------------
+        
         stats = assign_demand(network, od_pairs, iterations=4)
         network.refresh_weights()
-
+        _apply_secondary_failures(network)
+        network.refresh_weights()
         current_sets = _status_sets(network)
         newly_stressed = sorted(current_sets["stressed"] - prev_sets["stressed"])
         newly_overloaded = sorted(current_sets["overloaded"] - prev_sets["overloaded"])
@@ -226,7 +232,20 @@ def simulate_failure(
         final_failed_edges=sorted(final_sets["failed"]),
         unreachable_hospital_zones=unreachable_zones,
     )
-
+def _apply_secondary_failures(network: Network) -> List[str]:
+    """Roads carrying far more than capacity give out too. Without this the
+    outer loop is a no-op: assign_demand resets loads every call, so
+    iteration 2 reproduces iteration 1 and cascade_depth is always 1."""
+    candidates = sorted(
+        (e for e in network.edges_by_id.values()
+         if e.status != EdgeStatus.FAILED
+         and e.utilization > SECONDARY_FAILURE_UTILIZATION),
+        key=lambda e: -e.utilization,
+    )[:MAX_SECONDARY_FAILURES_PER_STEP]
+    for edge in candidates:
+        edge.status = EdgeStatus.FAILED
+        edge.current_load = 0.0
+    return [e.edge_id for e in candidates]
 
 def _label_for_iteration(
     it: int, newly_stressed: List[str], newly_overloaded: List[str], newly_failed: List[str]
