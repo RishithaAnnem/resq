@@ -149,6 +149,15 @@ class Network:
         edge.status = EdgeStatus.FAILED
         edge.current_load = 0.0
 
+      def expand_road(self, edge_id: str) -> List[str]:
+        """A physical road is two directed edges with different ids."""
+        edge = self.edges_by_id[edge_id]
+        ids = [edge_id]
+        reverse = self.graph.get_edge_data(edge.target, edge.source)
+        if reverse and reverse["edge_id"] != edge_id:
+            ids.append(reverse["edge_id"])
+        return ids  
+        
     def fail_junction(self, node_id: str) -> List[str]:
         """Fail all edges incident to a junction. Returns affected edge_ids."""
         affected = []
