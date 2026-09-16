@@ -94,4 +94,7 @@ PRIORITY_MODE_WEIGHTS: Dict[str, ResilienceWeights] = {
 ACCESSIBILITY_DETERIORATION_THRESHOLD_PCT: float = 20.0
 
 # Random seed used everywhere for determinism (demo mode must be reproducible)
-DEMO_SEED: int = 42
+DEMO_SEED: int = 42 
+OD_PAIR_COUNT: int = 250
+SECONDARY_FAILURE_UTILIZATION: float = 2.0
+MAX_SECONDARY_FAILURES_PER_STEP: int = 4
