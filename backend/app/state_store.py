@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
+from app.config import OD_PAIR_COUNT
 from app.data.loader import load_network
 from app.models.intervention import Intervention, InterventionType
 from app.models.network import Network
@@ -31,7 +32,7 @@ class Store:
 
     def load_demo(self):
         network = load_network(mode="demo")
-        od_pairs, _stats = compute_baseline(network, num_pairs=60, iterations=4)
+        od_pairs, _stats = compute_baseline(network, num_pairs=OD_PAIR_COUNT, iterations=4)
         self.network = network
         self.od_pairs = od_pairs
         self.baseline_snapshot = capture_baseline_snapshot(network, od_pairs)
